@@ -5,15 +5,35 @@ import math
 
 class HolographicInterface:
     def __init__(self):
-        # 1. Initialize MediaPipe Hand Tracking
-        self.mp_hands = mp.solutions.hands
+        # 1. Initialize MediaPipe Hand Tracking using the new Tasks API
+        # which is supported in newer versions of MediaPipe
+        BaseOptions = mp.tasks.BaseOptions
+        HandLandmarker = mp.tasks.vision.HandLandmarker
+        HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
+        VisionRunningMode = mp.tasks.vision.RunningMode
+
+        # We need a model file for the Tasks API. This might be a hurdle if not present.
+        # However, many users still use 'solutions'. 
+        # Let's try the dynamic import trick first.
+        try:
+            from mediapipe.python.solutions import hands as mp_hands
+            from mediapipe.python.solutions import drawing_utils as mp_draw
+            self.mp_hands = mp_hands
+            self.mp_draw = mp_draw
+        except ImportError:
+            # Fallback or error
+            import mediapipe.solutions.hands as mp_hands
+            import mediapipe.solutions.drawing_utils as mp_draw
+            self.mp_hands = mp_hands
+            self.mp_draw = mp_draw
+
         self.hands = self.mp_hands.Hands(
             static_image_mode=False,
             max_num_hands=1,
             min_detection_confidence=0.7,
             min_tracking_confidence=0.5
         )
-        self.mp_draw = mp.solutions.drawing_utils
+
 
         # 2. Interface State
         self.obj_pos = [320, 240]  # Center of a 640x480 screen
