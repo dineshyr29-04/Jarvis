@@ -6,15 +6,21 @@
 cd C:\Users\vicky\Jarvis
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
-python gestures.py
+python app.py
 ```
 
-The Stage 2 interface opens in fullscreen and shows live hand positions, coordinates, and gesture state directly on the dashboard.
+The HTML UI opens in your browser and the backend keeps the webcam, gestures, and screenshot capture running.
+
+Screenshot behavior:
+
+- The Copy Screenshot button downloads the PNG and tries to copy it to your clipboard.
+- Press `S` to trigger the same screenshot flow from the keyboard.
 
 Keyboard shortcuts:
 
 - `P` pauses gesture interactions.
 - `C` resumes gesture interactions.
+- `S` copies and downloads the current screenshot.
 - `Q` or `Esc` exits.
 
 ## Controls
@@ -30,6 +36,7 @@ Keyboard shortcuts:
 - Peace changes the theme.
 - Thumbs-up takes a screenshot.
 - Point follows your index finger.
+- The browser UI is now the primary interface, with backend gesture processing and a cleaner layout.
 
 ## Files
 

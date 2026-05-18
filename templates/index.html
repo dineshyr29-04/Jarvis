@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ app_title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+</head>
+<body>
+  <div class="page-shell">
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">Gesture Backend + HTML UI</div>
+        <h1>{{ app_title }}</h1>
+      </div>
+      <div class="status-cluster">
+        <div class="status-pill" id="statusPill">System online</div>
+        <div class="status-pill subtle" id="themePill">Theme: Cyan</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel sidebar left">
+        <section class="card hero-card">
+          <div class="card-label">Live State</div>
+          <div class="hero-value" id="gestureName">IDLE</div>
+          <p class="hero-copy" id="statusText">Waiting for hand input.</p>
+        </section>
+
+        <section class="card metrics-grid">
+          <div class="metric">
+            <span>Hand Count</span>
+            <strong id="handCount">0</strong>
+          </div>
+          <div class="metric">
+            <span>FPS</span>
+            <strong id="fpsValue">0</strong>
+          </div>
+          <div class="metric">
+            <span>Mode</span>
+            <strong id="modeValue">Running</strong>
+          </div>
+          <div class="metric">
+            <span>Shape</span>
+            <strong id="shapeValue">HEXAGON</strong>
+          </div>
+        </section>
+
+        <section class="card action-card">
+          <div class="card-label">Gesture Controls</div>
+          <div class="button-row">
+            <button class="btn danger" data-action="pause">Stop Gestures</button>
+            <button class="btn success" data-action="resume">Continue</button>
+          </div>
+          <div class="button-row">
+            <button class="btn soft" data-action="theme">Change Theme</button>
+            <button class="btn accent" id="screenshotBtn">Copy Screenshot</button>
+          </div>
+          <p class="tiny-copy">Fist pauses. Open palm resumes. Peace changes theme. Thumbs-up captures.</p>
+        </section>
+      </aside>
+
+      <section class="panel feed-panel">
+        <div class="feed-frame">
+          <img id="feedImage" src="/video_feed" alt="Live camera feed" />
+          <div class="feed-overlay">
+            <div class="feed-chip">LIVE</div>
+            <div class="feed-chip subtle">Hands tracked in backend</div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel sidebar right">
+        <section class="card shape-card">
+          <div class="card-label">Shape Library</div>
+          <div class="shape-grid" id="shapeGrid">
+            <button class="shape-tile active" data-shape="CIRCLE">Circle</button>
+            <button class="shape-tile" data-shape="SQUARE">Square</button>
+            <button class="shape-tile" data-shape="TRIANGLE">Triangle</button>
+            <button class="shape-tile" data-shape="HEXAGON">Hexagon</button>
+          </div>
+        </section>
+
+        <section class="card hand-card">
+          <div class="card-label">Hand Positions</div>
+          <div id="handList" class="hand-list">
+            <div class="hand-row empty">No hands detected yet.</div>
+          </div>
+        </section>
+
+        <section class="card capture-card">
+          <div class="card-label">Screenshot Flow</div>
+          <p>Click copy screenshot to save the current frame and copy it to your clipboard.</p>
+          <div class="capture-path" id="capturePath">No capture yet.</div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
