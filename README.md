@@ -9,6 +9,8 @@ python -m pip install -r requirements.txt
 python gestures.py
 ```
 
+The Stage 2 interface opens in fullscreen and shows live hand positions, coordinates, and gesture state directly on the dashboard.
+
 ## Controls
 
 - Pinch a shape tile on the right panel to switch the active shape.
@@ -16,6 +18,7 @@ python gestures.py
 - Use one hand to click or drag the hologram.
 - Use two hands in pinch or grab mode to scale and rotate the active object.
 - Swipe quickly to switch the neon color palette.
+- Your hand position is shown as a live marker and coordinate readout inside the interface.
 
 ## Files
 

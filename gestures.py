@@ -231,6 +231,31 @@ class InteractiveHologram:
         self._draw_glow_text(frame, title, (x + 14, y + 24), (245, 245, 245), scale=0.52, thickness=1)
         cv2.putText(frame, subtitle, (x + 14, y + 44), cv2.FONT_HERSHEY_SIMPLEX, 0.38, border, 1, cv2.LINE_AA)
 
+    def _draw_hand_overlay(self, frame, hand, panel_rect):
+        x, y, w, h = panel_rect
+        center = hand["action_center"]
+        gesture = hand["gesture"]
+        hand_id = hand["id"]
+        pinch_dist = hand["pinch_dist"]
+        grab_dist = hand["grab_dist"]
+        label = hand["label"]
+
+        cv2.circle(frame, center, 16, self.color, 2, cv2.LINE_AA)
+        cv2.circle(frame, center, 5, (255, 255, 255), cv2.FILLED, cv2.LINE_AA)
+        cv2.line(frame, (center[0] - 26, center[1]), (center[0] + 26, center[1]), self.color, 1, cv2.LINE_AA)
+        cv2.line(frame, (center[0], center[1] - 26), (center[0], center[1] + 26), self.color, 1, cv2.LINE_AA)
+
+        callout_x = min(max(center[0] + 18, x + 14), x + w - 154)
+        callout_y = min(max(center[1] - 38, y + 14), y + h - 68)
+        cv2.rectangle(frame, (callout_x, callout_y), (callout_x + 140, callout_y + 52), (14, 14, 18), cv2.FILLED)
+        cv2.rectangle(frame, (callout_x, callout_y), (callout_x + 140, callout_y + 52), self.color, 1, cv2.LINE_AA)
+        self._draw_glow_text(frame, f"H{hand_id} {label[:5].upper()}", (callout_x + 10, callout_y + 18), (245, 245, 245), scale=0.42, thickness=1)
+        cv2.putText(frame, f"{gesture}", (callout_x + 10, callout_y + 34), cv2.FONT_HERSHEY_SIMPLEX, 0.42, self.color, 1, cv2.LINE_AA)
+        cv2.putText(frame, f"x:{center[0]} y:{center[1]}", (callout_x + 10, callout_y + 48), cv2.FONT_HERSHEY_SIMPLEX, 0.36, (220, 220, 220), 1, cv2.LINE_AA)
+
+        coords_text = f"pinch {pinch_dist:.0f}  grab {grab_dist:.0f}"
+        cv2.putText(frame, coords_text, (callout_x + 10, callout_y - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (180, 180, 180), 1, cv2.LINE_AA)
+
     def _handle_click(self, point):
         shape_rects, capture_rect = self._shape_rects()
         for shape_name, rect in shape_rects:
@@ -318,6 +343,20 @@ class InteractiveHologram:
         self._draw_panel_card(frame, (40, 284, 250, 70), "SELECTED SHAPE", self.selected_shape, accent=(0, 255, 150))
         self._draw_panel_card(frame, (40, 366, 250, 70), "SCREENSHOT", "Saved to screenshots/", accent=(255, 255, 0))
 
+        self._draw_panel_card(frame, (40, 448, 250, 112), "HAND POSITION", "See live coordinates here", accent=(255, 180, 120))
+        if gesture_data["hands"]:
+            y_offset = 478
+            for idx, hand in enumerate(gesture_data["hands"][:2]):
+                center = hand["action_center"]
+                line1 = f"H{hand['id']} {hand['gesture']}"
+                line2 = f"x:{center[0]} y:{center[1]}"
+                line3 = f"pinch:{hand['pinch_dist']:.0f} grab:{hand['grab_dist']:.0f}"
+                cv2.putText(frame, line1, (54, y_offset + idx * 24), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (245, 245, 245), 1, cv2.LINE_AA)
+                cv2.putText(frame, line2, (140, y_offset + idx * 24), cv2.FONT_HERSHEY_SIMPLEX, 0.42, self.color, 1, cv2.LINE_AA)
+                cv2.putText(frame, line3, (54, y_offset + 12 + idx * 24), cv2.FONT_HERSHEY_SIMPLEX, 0.34, (180, 180, 180), 1, cv2.LINE_AA)
+        else:
+            cv2.putText(frame, "Waiting for hand...", (54, 478), cv2.FONT_HERSHEY_SIMPLEX, 0.42, (200, 200, 200), 1, cv2.LINE_AA)
+
         shape_rects, capture_rect = self._shape_rects()
         self._draw_glow_text(frame, "SHAPE LIBRARY", (right_panel[0] + 26, 60), self.color, scale=0.72, thickness=2)
         self._draw_glow_text(frame, "Use pinch as click. Select one shape at a time.", (right_panel[0] + 26, 88), (220, 220, 220), scale=0.43, thickness=1)
@@ -351,11 +390,8 @@ class InteractiveHologram:
         self._draw_glow_text(frame, status_text, (42, status_y), (230, 230, 230), scale=0.52, thickness=1)
 
         if gesture_data["hands"]:
-            hand = gesture_data["hands"][0]
-            point = hand["action_center"]
-            if hand["gesture"] == "PINCH":
-                cv2.circle(frame, point, 14, (255, 255, 255), 2, cv2.LINE_AA)
-                cv2.circle(frame, point, 4, self.color, cv2.FILLED, cv2.LINE_AA)
+            for hand in gesture_data["hands"]:
+                self._draw_hand_overlay(frame, hand, center_panel)
 
     def _update_motion(self, gesture_data):
         hands = gesture_data["hands"]
@@ -422,9 +458,15 @@ class InteractiveHologram:
 
 def main():
     cap = cv2.VideoCapture(0)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
     tracker = HandTracker(max_hands=2, detection_con=0.7, tracking_con=0.7, smooth_alpha=0.5)
     recognizer = GestureRecognizer(pinch_threshold=45, grab_threshold=70, swipe_window=5)
     hologram = InteractiveHologram(x=320, y=240, size=80)
+
+    window_name = "Iron Man Holographic Interface - Stage 2"
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty(window_name, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
     print("[INFO] Stage 2 Gesture Recognition & Interactive Hologram Initialized.")
     print("[INFO] Pinch a shape tile to select it. Pinch CAPTURE to save a screenshot.")
@@ -437,7 +479,7 @@ def main():
             break
 
         frame = cv2.flip(frame, 1)
-        hands_data = tracker.process_frame(frame, draw=True)
+        hands_data = tracker.process_frame(frame, draw=False)
         gesture_analysis = recognizer.analyze(hands_data)
 
         hologram.update(gesture_analysis)
@@ -451,7 +493,7 @@ def main():
         cv2.putText(frame, f"FPS: {int(fps)}", (20, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2, cv2.LINE_AA)
         cv2.putText(frame, "STAGE 2: GESTURE ENGINE & HOLO-MANIPULATION", (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 200, 0), 2, cv2.LINE_AA)
 
-        cv2.imshow("Iron Man Holographic Interface - Stage 2", frame)
+        cv2.imshow(window_name, frame)
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q") or key == 27:
             break
